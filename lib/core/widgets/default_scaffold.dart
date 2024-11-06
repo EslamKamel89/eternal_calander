@@ -7,10 +7,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class DefaultScaffold extends StatelessWidget {
   const DefaultScaffold({
     super.key,
-    required this.title,
     required this.child,
   });
-  final String title;
   final Widget child;
   @override
   Widget build(BuildContext context) {
@@ -18,7 +16,7 @@ class DefaultScaffold extends StatelessWidget {
       child: Scaffold(
         body: Stack(
           children: [
-            SizedBox(width: context.width, height: context.height),
+            Container(width: context.width, height: context.height, color: Colors.transparent),
             Positioned(
               top: 0,
               left: 0,
@@ -63,6 +61,7 @@ class DefaultScaffold extends StatelessWidget {
                     topRight: Radius.circular(20.w),
                   ),
                 ),
+                alignment: Alignment.topCenter,
                 child: child,
               ),
             )
