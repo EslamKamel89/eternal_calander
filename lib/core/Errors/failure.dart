@@ -56,4 +56,8 @@ class ServerFailure extends Failure {
     }
     return ServerFailure('There was an error, Please try again later');
   }
+
+  factory ServerFailure.unkownError() {
+    return ServerFailure('Error Occured');
+  }
 }

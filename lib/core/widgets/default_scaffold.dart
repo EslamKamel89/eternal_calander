@@ -1,15 +1,44 @@
+import 'dart:async';
+
 import 'package:eternal_calander/core/extensions/context-extensions.dart';
+import 'package:eternal_calander/core/widgets/custom_fading_widget.dart';
+import 'package:eternal_calander/homepage/presentation/cubits/location/location_cubit.dart';
+import 'package:eternal_calander/homepage/presentation/cubits/prayer_time/prayer_time_cubit.dart';
 import 'package:eternal_calander/utils/assets/assets.dart';
 import 'package:eternal_calander/utils/styles/styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class DefaultScaffold extends StatelessWidget {
+class DefaultScaffold extends StatefulWidget {
   const DefaultScaffold({
     super.key,
     required this.child,
   });
   final Widget child;
+
+  @override
+  State<DefaultScaffold> createState() => _DefaultScaffoldState();
+}
+
+class _DefaultScaffoldState extends State<DefaultScaffold> {
+  late final PrayerTimeCubit prayerTimeCubit;
+  late Timer timer;
+  @override
+  void initState() {
+    prayerTimeCubit = context.read<PrayerTimeCubit>();
+    timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+      prayerTimeCubit.getNextPrayer();
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -37,14 +66,42 @@ class DefaultScaffold extends StatelessWidget {
                 children: [
                   const Icon(Icons.settings, color: Colors.white),
                   SizedBox(height: 5.h),
-                  txt('الظهر بعد', c: Colors.white, e: St.semi25),
-                  txt('00 : 25 : 49', c: Colors.white, e: St.semi18),
+                  BlocBuilder<PrayerTimeCubit, PrayerTimeState>(
+                    buildWhen: (previous, current) => current is UpdateNextPrayerTimeState,
+                    builder: (context, state) {
+                      if (state is UpdateNextPrayerTimeState && prayerTimeCubit.nextPrayer.length == 3) {
+                        return Column(
+                          children: [
+                            txt('${prayerTimeCubit.nextPrayer[0]} بعد', c: Colors.white, e: St.semi25),
+                            txt(' ${prayerTimeCubit.nextPrayer[1]} : ${prayerTimeCubit.nextPrayer[2]} : 00',
+                                c: Colors.white, e: St.semi18),
+                          ],
+                        );
+                      }
+                      return CustomFadingWidget(
+                        child: Column(
+                          children: [
+                            txt('رجاء الأنتظار', c: Colors.white, e: St.semi25),
+                            txt(' 00 : 00 : 00', c: Colors.white, e: St.semi18),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   SizedBox(height: 10.h),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.red),
-                      txt('المنصورة (قسم ثاني)', c: Colors.white, e: St.reg14),
-                    ],
+                  BlocBuilder<LocationCubit, LocationState>(
+                    builder: (context, state) {
+                      if (state is LocationSuccessState && state.cityName != '') {
+                        return Row(
+                          children: [
+                            const Icon(Icons.location_on, color: Colors.red),
+                            txt(state.cityName, c: Colors.white, e: St.reg14),
+                          ],
+                        );
+                      }
+
+                      return const SizedBox();
+                    },
                   ),
                 ],
               ),
@@ -62,7 +119,7 @@ class DefaultScaffold extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.topCenter,
-                child: child,
+                child: widget.child,
               ),
             )
           ],
